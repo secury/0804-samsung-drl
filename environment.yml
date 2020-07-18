@@ -1,0 +1,11 @@
+name: drl
+dependencies:
+- python=3.6
+- numpy=1.16.6
+- matplotlib=3.2
+- pip=20.1.1
+- pip:
+  - gym==0.17.2
+  - pygame==1.9.6
+  - tensorflow==1.14
+
