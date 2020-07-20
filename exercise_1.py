@@ -44,8 +44,8 @@ class QNetwork(Layer):
 
     def call(self, inputs, **kwargs):
         """
-        :param state: [batch_size, state_dim] 크기의 numpy array
-        :return: [batch_size, num_actions] 크기의 numpy array
+        :param state: [batch_size, state_dim] 크기의 Tensor
+        :return: [batch_size, num_actions] 크기의 Tensor
         """
         state, = inputs
         h = self.l1(state)
