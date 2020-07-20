@@ -35,12 +35,40 @@ class Policy(object):
             log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
                                        tf.constant_initializer(-1.0))
 
+        logp = -0.5 * tf.reduce_sum(log_vars)
+        logp += -0.5 * tf.reduce_sum(tf.square(act_ph - means) /
+                                         tf.exp(log_vars), axis=1)
+        logp_old = -0.5 * tf.reduce_sum(old_log_vars_ph)
+        logp_old += -0.5 * tf.reduce_sum(tf.square(act_ph - old_means_ph) /
+                                             tf.exp(old_log_vars_ph), axis=1)
+
+        pg_ratio = tf.exp(logp - logp_old)
+        clipped_pg_ratio = tf.clip_by_value(pg_ratio, 1 - clipping, 1 + clipping)
+        surrogate_loss = tf.minimum(advantages_ph * pg_ratio,
+                                        advantages_ph * clipped_pg_ratio)
+        loss = -tf.reduce_mean(surrogate_loss)
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+        train_op = optimizer.minimize(loss)
+
         def sample_action(obs):
             sampled_act = means + tf.exp(log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
             feed_dict = {obs_ph: obs}
             return sess.run(sampled_act, feed_dict=feed_dict)
 
+        def update(observes, actions, advantages, logger):
+            feed_dict = {obs_ph: observes, act_ph: actions, advantages_ph: advantages}
+            old_means_np, old_log_vars_np = sess.run([means, log_vars], feed_dict)
+            feed_dict[old_log_vars_ph] = old_log_vars_np
+            feed_dict[old_means_ph] = old_means_np
+            for e in range(epochs):
+                sess.run(train_op, feed_dict)
+                policy_loss = sess.run(loss, feed_dict)
+
+            logger.log({'PolicyLoss': policy_loss})
+
         self.sample = sample_action
+        self.update = update
 
 
 def init_gym(env_name, animate=False):

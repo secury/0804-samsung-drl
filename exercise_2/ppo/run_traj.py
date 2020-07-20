@@ -1,26 +1,50 @@
 import numpy as np
-from policy import Policy
-from utils import Logger, Scaler
-from datetime import datetime
-import os
 import argparse
 import gym
-import signal
+import tensorflow as tf
 import pybulletgym
 
-def init_gym(env_name, animate=True):
-    """
-    Initialize gym environment, return dimension of observation
-    and action spaces.
+class Policy(object):
+    """ NN-based policy approximation """
+    def __init__(self, sess, obs_dim, act_dim, clipping=0.2):
+        """
+        Args:
+            obs_dim: num observation dimensions (int)
+            act_dim: num action dimensions (int)
+        """
+        epochs = 20
+        obs_ph = tf.placeholder(tf.float32, (None, obs_dim), 'obs')
+        act_ph = tf.placeholder(tf.float32, (None, act_dim), 'act')
+        advantages_ph = tf.placeholder(tf.float32, (None,), 'advantages')
+        old_log_vars_ph = tf.placeholder(tf.float32, (act_dim,), 'old_log_vars')
+        old_means_ph = tf.placeholder(tf.float32, (None, act_dim), 'old_means')
 
-    Args:
-        env_name: str environment name (e.g. "Humanoid-v1")
+        with tf.compat.v1.variable_scope("policy_nn"):
 
-    Returns: 3-tuple
-        gym environment (object)
-        number of observation dimensions (int)
-        number of action dimensions (int)
-    """
+            ### Set hid_size freely,
+            hid1_size = None ### YOUR IMPLETETAION PART ###
+            hid3_size = None ### YOUR IMPLETETAION PART ###
+            hid2_size = None ### YOUR IMPLETETAION PART ###
+            # 3 hidden layers with tanh activations
+            h1 = None ### YOUR IMPLETETAION PART ###
+            h2 = None ### YOUR IMPLETETAION PART ###
+            h3 = None ### YOUR IMPLETETAION PART ###
+            means = None ### YOUR IMPLETETAION PART ###
+            log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
+                                       tf.constant_initializer(-1.0))
+
+
+        def sample_action(obs):
+            sampled_act = means + tf.exp(log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
+            feed_dict = {obs_ph: obs}
+            return sess.run(sampled_act, feed_dict=feed_dict)
+
+
+        self.sample = sample_action
+
+
+def init_gym(env_name, animate=False):
+
     env = gym.make(env_name)
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
@@ -31,25 +55,21 @@ def init_gym(env_name, animate=True):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=('Train policy on OpenAI Gym environment '
-                                                  'using Proximal Policy Optimizer'))
-    parser.add_argument('--env_name', type=str, default='InvertedPendulumPyBulletEnv-v0', help='OpenAI Gym environment name')
 
-    args = parser.parse_args()
+    env_name = 'InvertedPendulumPyBulletEnv-v0'
 
     ### FIXME STEP 2 ###
     ### FIXME Run one episode with random policy, Store observations, actions, rewards in the list
-    env, obs_dim, act_dim = init_gym(args.env_name, animate=True)
-    policy = Policy(obs_dim, act_dim, kl_targ=0.03, hid1_mult=5, policy_logvar=1.0, clipping_range=[0.2]*2)
+    env, obs_dim, act_dim = init_gym(env_name, animate=True)
+    sess = tf.Session()
+    policy = Policy(sess, obs_dim, act_dim)
+    sess.run(tf.compat.v1.initializers.global_variables())
+
     obs = env.reset()
     observes, actions, rewards= [], [], []
     done = False
     while not done:
-        obs = obs.astype(np.float32).reshape((1, -1))
-        action = policy.sample(obs).reshape((1, -1)).astype(np.float32)
-        actions.append(action)
-        obs, reward, done, _ = env.step(action)
-        rewards.append(reward)
+        ### YOUR IMPLETETAION PART ###
 
     accumulated_reward = sum(rewards)
     print("="*50)
@@ -60,7 +80,7 @@ if __name__ == "__main__":
     ### FIXME STEP3
     ### FIXME Run 10 episodes, each trajectory is sotred in a dictonary as the form {'observe':, 'actions':, 'rewards' :}
     ### FIXME Store 10 trajectories  in list []
-    env, _, _ = init_gym(args.env_name, animate=False)
+    env, _, _ = init_gym(env_name, animate=False)
     episodes = 10
     trajectories = []
     for e in range(episodes):
@@ -69,26 +89,19 @@ if __name__ == "__main__":
         observes, actions, rewards = [], [], []
         while not done:
             # For one episode
-            obs = obs.astype(np.float32).reshape((1, -1))
-            observes.append(obs)
-            action = policy.sample(obs).reshape((1, -1)).astype(np.float32)
-            actions.append(action)
-            obs, reward, done, _ = env.step(action)
-            rewards.append(reward)
+            ### YOUR IMPLETETAION PART ###
 
-            trajectory = {'observes': np.concatenate(observes),
-                          'actions': np.concatenate(actions),
-                          'rewards': np.array(rewards, dtype=np.float64)
+
+            trajectory = {'observes': None, ### YOUR IMPLETETAION PART ###
+                          'actions': None, ### YOUR IMPLETETAION PART ###
+                          'rewards': None, ### YOUR IMPLETETAION PART ###
                           }
 
 
         trajectories.append(trajectory)
 
-    returns = 0
-    for trajectory in trajectories:
-        returns += sum(trajectory['rewards'])
 
-    avg_returns = returns/len(trajectories)
+    avg_returns = None ### YOUR IMPLETETAION PART ###
     print("=" * 50)
     print("During 10 episodes, The average of accumulated Rewards: {}".format(avg_returns))
     print("=" * 50)
