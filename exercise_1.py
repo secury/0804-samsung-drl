@@ -5,7 +5,6 @@ from collections import deque
 import gym
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.layers import Dense, Input, Layer
 
 np.set_printoptions(precision=3, suppress=True, threshold=10000, linewidth=250)
 
@@ -34,13 +33,13 @@ class ReplayBuffer:
         return np.array(state_batch), np.array(action_batch), np.array(reward_batch)[:, None], np.array(next_state_batch), np.array(done_batch)[:, None]
 
 
-class QNetwork(Layer):
+class QNetwork(tf.keras.layers.Layer):
 
     def __init__(self, state_dim, num_actions):
         super(QNetwork, self).__init__()
-        self.l1 = Dense(64, activation='relu')
-        self.l2 = Dense(64, activation='relu')
-        self.out = Dense(num_actions)
+        self.l1 = tf.keras.layers.Dense(64, activation='relu')
+        self.l2 = tf.keras.layers.Dense(64, activation='relu')
+        self.out = tf.keras.layers.Dense(num_actions)
 
     def call(self, inputs, **kwargs):
         """
@@ -70,11 +69,11 @@ class DQN:
 
         # TF session / placeholders
         self.sess = tf.keras.backend.get_session()
-        self.state_ph = Input(self.state_dim, name='state', dtype=tf.float32)  # [batch_size, state_dim]
-        self.action_ph = Input((), name='action', dtype=tf.int32)  # [batch_size]
-        self.reward_ph = Input(1, name='reward', dtype=tf.float32)  # [batch_size, 1]
-        self.next_state_ph = Input(self.state_dim, name='next_state', dtype=tf.float32)  # [batch_size, state_dim]
-        self.done_ph = Input(1, name='done', dtype=tf.float32)  # [batch_size, 1]
+        self.state_ph = tf.keras.layers.Input(self.state_dim, name='state', dtype=tf.float32)  # [batch_size, state_dim]
+        self.action_ph = tf.keras.layers.Input((), name='action', dtype=tf.int32)  # [batch_size]
+        self.reward_ph = tf.keras.layers.Input(1, name='reward', dtype=tf.float32)  # [batch_size, 1]
+        self.next_state_ph = tf.keras.layers.Input(self.state_dim, name='next_state', dtype=tf.float32)  # [batch_size, state_dim]
+        self.done_ph = tf.keras.layers.Input(1, name='done', dtype=tf.float32)  # [batch_size, 1]
 
         # Q-Network / target Q-network
         self.q = QNetwork(self.state_dim, self.num_actions)
@@ -99,6 +98,7 @@ class DQN:
         self.train_op = optimizer.minimize(loss, var_list=self.q.trainable_variables)
 
         # Initialize variables
+        self.sess.run(tf.global_variables_initializer())
         self.sess.run(tf.variables_initializer(optimizer.variables()))
         self.update_target_q_weights()  # target Q network 의 파라미터를 Q-newtork 에서 복사
 
