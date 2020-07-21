@@ -4,43 +4,32 @@ import gym
 import tensorflow as tf
 import pybulletgym
 
-class Policy(object):
+
+class Policy(tf.layers.Layer):
     """ NN-based policy approximation """
-    def __init__(self, sess, obs_dim, act_dim, clipping=0.2):
+    def __init__(self, obs_dim, act_dim):
         """
         Args:
             obs_dim: num observation dimensions (int)
             act_dim: num action dimensions (int)
         """
-        epochs = 20
-        obs_ph = tf.placeholder(tf.float32, (None, obs_dim), 'obs')
-        act_ph = tf.placeholder(tf.float32, (None, act_dim), 'act')
-        advantages_ph = tf.placeholder(tf.float32, (None,), 'advantages')
-        old_log_vars_ph = tf.placeholder(tf.float32, (act_dim,), 'old_log_vars')
-        old_means_ph = tf.placeholder(tf.float32, (None, act_dim), 'old_means')
+        super(Policy, self).__init__()
+        self.obs_ph = tf.keras.layers.Input(obs_dim, name='obs')  # [batch_size, obs_dim]
 
-        with tf.compat.v1.variable_scope("policy_nn"):
+        ### Set hid_size freely,
+        hid1_size = 64 ### YOUR IMPLETETAION PART ###
+        hid2_size = 64 ### YOUR IMPLETETAION PART ###
+        # 2 hidden layers with tanh activations
+        h1 = tf.keras.layers.Dense(hid1_size)(self.obs_ph) ### YOUR IMPLETETAION PART ###
+        h2 = tf.keras.layers.Dense(hid2_size)(h1) ### YOUR IMPLETETAION PART ###
+        means = tf.keras.layers.Dense(act_dim)(h2) ### YOUR IMPLETETAION PART ###
+        log_vars = self.add_weight('logvars', (act_dim), initializer=tf.constant_initializer(-1.0))
+        batch_size = tf.shape(self.obs_ph)[0]
+        self.sampled_act = means + tf.exp(log_vars) * tf.random_normal(shape=(batch_size, act_dim,))
 
-            ### Set hid_size freely,
-            hid1_size = None ### YOUR IMPLETETAION PART ###
-            hid3_size = None ### YOUR IMPLETETAION PART ###
-            hid2_size = None ### YOUR IMPLETETAION PART ###
-            # 3 hidden layers with tanh activations
-            h1 = None ### YOUR IMPLETETAION PART ###
-            h2 = None ### YOUR IMPLETETAION PART ###
-            h3 = None ### YOUR IMPLETETAION PART ###
-            means = None ### YOUR IMPLETETAION PART ###
-            log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
-                                       tf.constant_initializer(-1.0))
-
-
-        def sample_action(obs):
-            sampled_act = means + tf.exp(log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
-            feed_dict = {obs_ph: obs}
-            return sess.run(sampled_act, feed_dict=feed_dict)
-
-
-        self.sample = sample_action
+    def sample(self, obs):
+        sess = tf.keras.backend.get_session()
+        return sess.run(self.sampled_act, feed_dict={self.obs_ph: np.array([obs])})[0]
 
 
 def init_gym(env_name, animate=False):
@@ -56,52 +45,54 @@ def init_gym(env_name, animate=False):
 
 if __name__ == "__main__":
 
-    env_name = 'InvertedPendulumPyBulletEnv-v0'
+    env_name = 'MountainCarContinuous-v0'
 
-    ### FIXME STEP 2 ###
-    ### FIXME Run one episode with random policy, Store observations, actions, rewards in the list
+    """
+    STEP 2
+    Run one episode with random policy, Store observations, actions, rewards in the list
+    """
     env, obs_dim, act_dim = init_gym(env_name, animate=True)
-    sess = tf.Session()
-    policy = Policy(sess, obs_dim, act_dim)
-    sess.run(tf.compat.v1.initializers.global_variables())
+    policy = Policy(obs_dim, act_dim)
 
     obs = env.reset()
     observes, actions, rewards= [], [], []
     done = False
     while not done:
-        ### YOUR IMPLETETAION PART ###
+        ########################
+        # YOUR IMPLETETAION PART
+        pass
+        ########################
 
-    accumulated_reward = sum(rewards)
-    print("="*50)
-    print("During one episodes, The accumulated Rewards: {}".format(accumulated_reward))
-    print("="*50)
+    accumulated_reward = np.sum(rewards)
+    print("======================================")
+    print(f"During one episodes, The accumulated Rewards: {accumulated_reward}")
+    print("======================================")
     del env
 
-    ### FIXME STEP3
-    ### FIXME Run 10 episodes, each trajectory is sotred in a dictonary as the form {'observe':, 'actions':, 'rewards' :}
-    ### FIXME Store 10 trajectories  in list []
+    """
+    STEP3
+    """
     env, _, _ = init_gym(env_name, animate=False)
     episodes = 10
-    trajectories = []
+
+    total_reward = 0
+    returns = []
     for e in range(episodes):
         obs = env.reset()
         done = False
-        observes, actions, rewards = [], [], []
-        while not done:
-            # For one episode
-            ### YOUR IMPLETETAION PART ###
+        accumulated_reward = 0
+        # For one episode
+        for t in range(10000):
+            ########################
+            # YOUR IMPLETETAION PART
+            accumulated_reward += 0
+            ########################
 
+            if done:
+                break
+        returns.append(accumulated_reward)
 
-            trajectory = {'observes': None, ### YOUR IMPLETETAION PART ###
-                          'actions': None, ### YOUR IMPLETETAION PART ###
-                          'rewards': None, ### YOUR IMPLETETAION PART ###
-                          }
-
-
-        trajectories.append(trajectory)
-
-
-    avg_returns = None ### YOUR IMPLETETAION PART ###
-    print("=" * 50)
-    print("During 10 episodes, The average of accumulated Rewards: {}".format(avg_returns))
-    print("=" * 50)
+    avg_returns = np.mean(returns)
+    print("======================================")
+    print(f"During 10 episodes, The average of accumulated Rewards: {avg_returns}")
+    print("======================================")
