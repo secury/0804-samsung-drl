@@ -11,29 +11,22 @@ import os
 
 class NNValueFunction(object):
     """ NN-based state-value function """
-    def __init__(self, sess, obs_dim, hid1_mult):
+    def __init__(self, obs_dim, hid1_mult=10):
 
-
-        self.global_step = 0
         self.replay_buffer_x = None
         self.replay_buffer_y = None
         self.obs_dim = obs_dim
         self.hid1_mult = hid1_mult
         self.epochs = 10
         self.lr = None  # learning rate set in _build_graph()
-        self._build_graph()
-        self.sess = sess
+        self.sess = tf.keras.backend.get_session()
 
-    def _build_graph(self):
-        """ Construct TensorFlow graph, including loss function, init op and train op """
         with tf.compat.v1.variable_scope("val_function"):
             self.obs_ph = tf.placeholder(tf.float32, (None, self.obs_dim), 'obs_valfunc')
             self.val_ph = tf.placeholder(tf.float32, (None,), 'val_valfunc')
-            # hid1 layer size is 10x obs_dim, hid3 size is 10, and hid2 is geometric mean
-            hid1_size = self.obs_dim * self.hid1_mult  # default multipler 10 chosen empirically on 'Hopper-v1'
-            hid3_size = 5  # 5 chosen empirically on 'Hopper-v1'
+            hid1_size = self.obs_dim * self.hid1_mult
+            hid3_size = 5
             hid2_size = int(np.sqrt(hid1_size * hid3_size))
-            # heuristic to set learning rate based on NN size (tuned on 'Hopper-v1')
             self.lr = 1e-2 / np.sqrt(hid2_size)  # 1e-3 empirically determined
 
             # 3 hidden layers with tanh activations
@@ -54,6 +47,7 @@ class NNValueFunction(object):
             optimizer = tf.train.AdamOptimizer(self.lr)
             self.train_op = optimizer.minimize(self.loss)
 
+        self.sess.run(tf.global_variables_initializer())
 
     def fit(self, x, y, logger):
 

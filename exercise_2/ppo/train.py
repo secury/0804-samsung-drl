@@ -12,68 +12,75 @@ import pybulletgym
 class Policy(object):
     """ NN-based policy approximation """
 
-    def __init__(self, sess, obs_dim, act_dim, clipping=0.2):
+    def __init__(self, obs_dim, act_dim, clipping=0.2):
         """
         Args:
             obs_dim: num observation dimensions (int)
             act_dim: num action dimensions (int)
         """
-        epochs = 20
-        obs_ph = tf.placeholder(tf.float32, (None, obs_dim), 'obs')
-        act_ph = tf.placeholder(tf.float32, (None, act_dim), 'act')
-        advantages_ph = tf.placeholder(tf.float32, (None,), 'advantages')
-        old_log_vars_ph = tf.placeholder(tf.float32, (act_dim,), 'old_log_vars')
-        old_means_ph = tf.placeholder(tf.float32, (None, act_dim), 'old_means')
+        self.sess = tf.keras.backend.get_session()
+        self.epochs = 20
 
-        with tf.compat.v1.variable_scope("policy_nn"):
+        self.obs_ph = tf.keras.layers.Input(obs_dim, name='obs')
+        self.act_ph = tf.keras.layers.Input(act_dim, name='act')
+        self.advantages_ph = tf.keras.layers.Input((None,), name='advantages')
+        self.old_log_vars_ph = tf.keras.layers.Input(act_dim, name='old_log_vars')
+        self.old_means_ph = tf.keras.layers.Input(act_dim, name='old_means')
 
-            ### Set hid_size freely,
-            hid1_size = None ### YOUR IMPLETETAION PART ###
-            hid3_size = None ### YOUR IMPLETETAION PART ###
-            hid2_size = None ### YOUR IMPLETETAION PART ###
-            # 3 hidden layers with tanh activations
-            h1 = None ### YOUR IMPLETETAION PART ###
-            h2 = None ### YOUR IMPLETETAION PART ###
-            h3 = None ### YOUR IMPLETETAION PART ###
-            means = None ### YOUR IMPLETETAION PART ###
-            log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
-                                       tf.constant_initializer(-1.0))
+        ### Set hid_size freely,
+        hid1_size = obs_dim * 5
+        hid3_size = act_dim * 10
+        hid2_size = int(np.sqrt(hid1_size * hid3_size))
 
-        logp = -0.5 * tf.reduce_sum(log_vars)
-        logp += -0.5 * tf.reduce_sum(tf.square(act_ph - means) /
-                                     tf.exp(log_vars), axis=1)
-        logp_old = -0.5 * tf.reduce_sum(old_log_vars_ph)
-        logp_old += -0.5 * tf.reduce_sum(tf.square(act_ph - old_means_ph) /
-                                         tf.exp(old_log_vars_ph), axis=1)
+        # 3 hidden layers with tanh activations
+        h1 = tf.keras.layers.Dense(hid1_size, activation="tanh", name="h1")(self.obs_ph)
+        h2 = tf.keras.layers.Dense(hid2_size, activation="tanh", name="h2")(h1)
+        h3 = tf.keras.layers.Dense(hid3_size, activation="tanh", name="h3")(h2)
+        self.means = tf.keras.layers.Dense(act_dim, name="means", activation="linear")(h3)
+        self.log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
+                                   tf.constant_initializer(-1.0))
 
-        pg_ratio = None ### YOUR IMPLETETAION PART ###
-        clipped_pg_ratio = None ### YOUR IMPLETETAION PART ###
-        surrogate_loss = None ### YOUR IMPLETETAION PART ###
-        loss = -tf.reduce_mean(surrogate_loss)
+        logp = -0.5 * tf.reduce_sum(self.log_vars)
+        logp += -0.5 * tf.reduce_sum(tf.square(self.act_ph - self.means) /
+                                     tf.exp(self.log_vars), axis=1)
+        logp_old = -0.5 * tf.reduce_sum(self.old_log_vars_ph)
+        logp_old += -0.5 * tf.reduce_sum(tf.square(self.act_ph - self.old_means_ph) /
+                                         tf.exp(self.old_log_vars_ph), axis=1)
+
+        """
+        STEP 4
+        The Clipped Surrogate Objective Function
+        """
+        ########################
+        # YOUR IMPLEMENTATION PART
+        pg_ratio = 0
+        clipped_pg_ratio = 0
+        surrogate_loss = 0
+        ########################
+        self.loss = -tf.reduce_mean(surrogate_loss)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-        train_op = optimizer.minimize(loss)
+        self.train_op = optimizer.minimize(self.loss)
 
-        def sample_action(obs):
-            sampled_act = means + tf.exp(log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
-            feed_dict = {obs_ph: obs}
-            return sess.run(sampled_act, feed_dict=feed_dict)
+    def sample(self, obs):
+        sampled_act = self.means + tf.exp(self.log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
+        feed_dict = {self.obs_ph: obs}
+        return self.sess.run(sampled_act, feed_dict=feed_dict)
 
-        def update(observes, actions, advantages, logger):
-            feed_dict = {obs_ph: observes, act_ph: actions, advantages_ph: advantages}
-            old_means_np, old_log_vars_np = sess.run([means, log_vars], feed_dict)
-            feed_dict[old_log_vars_ph] = old_log_vars_np
-            feed_dict[old_means_ph] = old_means_np
-            for e in range(epochs):
-                sess.run(train_op, feed_dict)
-                policy_loss = sess.run(loss, feed_dict)
+    def update(self, observes, actions, advantages, logger):
+        feed_dict = {self.obs_ph: observes, self.act_ph: actions, self.advantages_ph: [advantages]}
+        old_means_np, old_log_vars_np = self.sess.run([self.means, self.log_vars], feed_dict)
+        feed_dict[self.old_log_vars_ph] = [old_log_vars_np]
+        feed_dict[self.old_means_ph] = old_means_np
+        for e in range(self.epochs):
+            self.sess.run(self.train_op, feed_dict)
+            policy_loss = self.sess.run(self.loss, feed_dict)
 
-            logger.log({'PolicyLoss': policy_loss})
+        logger.log({'PolicyLoss': policy_loss})
 
-        self.sample = sample_action
-        self.update = update
 
-def run_episode(env, policy, scaler, animate=True):
+
+def run_episode(env, policy, scaler):
 
     obs = env.reset()
     observes, actions, rewards, unscaled_obs = [], [], [], []
@@ -83,8 +90,7 @@ def run_episode(env, policy, scaler, animate=True):
     scale[-1] = 1.0  # don't scale time step feature
     offset[-1] = 0.0  # don't offset time step feature
     while not done:
-        if animate:
-            env.render()
+
         obs = obs.astype(np.float32).reshape((1, -1))
         obs = np.append(obs, [[step]], axis=1)  # add time step feature
         unscaled_obs.append(obs)
@@ -100,7 +106,6 @@ def run_episode(env, policy, scaler, animate=True):
 
     return (np.concatenate(observes), np.concatenate(actions),
             np.array(rewards, dtype=np.float64), np.concatenate(unscaled_obs))
-
 
 def run_policy(env, policy, scaler, logger, episodes):
 
@@ -120,7 +125,6 @@ def run_policy(env, policy, scaler, logger, episodes):
                 'Steps': total_steps})
 
     return trajectories
-
 
 def discount(x, gamma):
     """ Calculate discounted forward sum of a sequence at each point """
@@ -160,16 +164,15 @@ if __name__ == "__main__":
     gamma = 0.995
     lam = 0.98
     batch_size = 5
-    hid1_mult = 10
 
     env = gym.make(env_name)
     obs_dim = env.observation_space.shape[0]
     obs_dim += 1 # add 1 to obs dimension for time step feature (see run_episode())
     act_dim = env.action_space.shape[0]
-    sess = tf.Session()
-    policy = Policy(sess, obs_dim, act_dim)
-    val_func = NNValueFunction(sess, obs_dim, hid1_mult)
-    sess.run(tf.compat.v1.initializers.global_variables())
+    # sess = tf.Session()
+    policy = Policy(obs_dim, act_dim)
+    val_func = NNValueFunction(obs_dim)
+    # sess.run(tf.compat.v1.initializers.global_variables())
 
     now = datetime.utcnow().strftime("%b-%d_%H:%M:%S")  # create unique directories
     logger = Logger(logname=env_name, now=now)

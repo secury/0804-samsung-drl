@@ -15,14 +15,23 @@ class Policy(tf.layers.Layer):
         """
         super(Policy, self).__init__()
         self.obs_ph = tf.keras.layers.Input(obs_dim, name='obs')  # [batch_size, obs_dim]
+        """
+        STEP 1
+        Gaussian NN Policy 
+        using tf.keras.layers.Dense
+        """
+        ########################
+        # YOUR IMPLEMENTATION PART
 
         ### Set hid_size freely,
-        hid1_size = 64 ### YOUR IMPLETETAION PART ###
-        hid2_size = 64 ### YOUR IMPLETETAION PART ###
+        hid1_size =0
+        hid2_size = 0
         # 2 hidden layers with tanh activations
-        h1 = tf.keras.layers.Dense(hid1_size)(self.obs_ph) ### YOUR IMPLETETAION PART ###
-        h2 = tf.keras.layers.Dense(hid2_size)(h1) ### YOUR IMPLETETAION PART ###
-        means = tf.keras.layers.Dense(act_dim)(h2) ### YOUR IMPLETETAION PART ###
+        h1 = 0
+        h2 = 0
+        means = 0
+        ########################
+
         log_vars = self.add_weight('logvars', (act_dim), initializer=tf.constant_initializer(-1.0))
         batch_size = tf.shape(self.obs_ph)[0]
         self.sampled_act = means + tf.exp(log_vars) * tf.random_normal(shape=(batch_size, act_dim,))
@@ -30,17 +39,6 @@ class Policy(tf.layers.Layer):
     def sample(self, obs):
         sess = tf.keras.backend.get_session()
         return sess.run(self.sampled_act, feed_dict={self.obs_ph: np.array([obs])})[0]
-
-
-def init_gym(env_name, animate=False):
-
-    env = gym.make(env_name)
-    obs_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.shape[0]
-    if animate:
-        env.render()
-
-    return env, obs_dim, act_dim
 
 
 if __name__ == "__main__":
@@ -51,7 +49,9 @@ if __name__ == "__main__":
     STEP 2
     Run one episode with random policy, Store observations, actions, rewards in the list
     """
-    env, obs_dim, act_dim = init_gym(env_name, animate=True)
+    env = gym.make(env_name)
+    obs_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.shape[0]
     policy = Policy(obs_dim, act_dim)
 
     obs = env.reset()
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     done = False
     while not done:
         ########################
-        # YOUR IMPLETETAION PART
+        # YOUR IMPLEMENTATION PART
         pass
         ########################
 
@@ -72,7 +72,6 @@ if __name__ == "__main__":
     """
     STEP3
     """
-    env, _, _ = init_gym(env_name, animate=False)
     episodes = 10
 
     total_reward = 0
@@ -84,7 +83,7 @@ if __name__ == "__main__":
         # For one episode
         for t in range(10000):
             ########################
-            # YOUR IMPLETETAION PART
+            # YOUR IMPLEMENTATION PART
             accumulated_reward += 0
             ########################
 
