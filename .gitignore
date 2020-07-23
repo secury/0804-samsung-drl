@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 /exercise_3/pofd_solution/fig/
 /exercise_3/pofd_solution/traj/
+/tmp/
