@@ -127,5 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/excercise_3/pofd_solution/fig/
-/excercise_3/pofd_solution/traj/
+/exercise_3/pofd_solution/fig/
+/exercise_3/pofd_solution/traj/

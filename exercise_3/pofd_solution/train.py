@@ -10,7 +10,7 @@ import scipy.signal
 from utils import Logger, Scaler
 from matplotlib import pyplot as plt, animation
 import pybulletgym
-import excercise_3.envs
+import exercise_3.envs
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
