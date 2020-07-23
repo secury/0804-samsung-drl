@@ -170,10 +170,9 @@ class Policy(object):
         logger.log({'PolicyLoss': policy_loss})
 
 
-def run_episode(env, policy, scaler, animate=False, sleep=None, figure=False, discriminator=None, reward_lambda=1e-1):
+def run_episode(env, policy, scaler, animate=False, sleep=None, discriminator=None, reward_lambda=1e-1):
     obs = env.reset()
     observes, actions, env_rewards, unscaled_obs = [], [], [], []
-    frames = []
     done = False
     step = 0.0
     scale, offset = scaler.get()
@@ -184,9 +183,6 @@ def run_episode(env, policy, scaler, animate=False, sleep=None, figure=False, di
             env.render()
             if sleep:
                 time.sleep(sleep)
-
-        if figure:
-            frames.append(env.render(mode="rgb_array"))
 
         obs = obs.astype(np.float32).reshape((1, -1))
         obs = np.append(obs, [[step]], axis=1)  # add time step feature
@@ -214,50 +210,7 @@ def run_episode(env, policy, scaler, animate=False, sleep=None, figure=False, di
     else:
         total_rewards = env_rewards
 
-    if figure:
-        return (observes, actions, total_rewards, unscaled_obs, env_rewards, frames)
-    else:
-        return (observes, actions, total_rewards, unscaled_obs, env_rewards)
-
-
-def record_demo(env_name, env, policy, scaler, nr_episodes=5):
-    observes_list = []
-    actions_list = []
-    rewards_list = []
-    frames_list = []
-    for i in range(nr_episodes):
-        if i == 0:
-            _, actions, _, unscaled_obs, env_rewards, frames = run_episode(env, policy, scaler, figure=True)
-        else:
-            _, actions, _, unscaled_obs, env_rewards = run_episode(env, policy, scaler, figure=False)
-            frames = []
-        observes_list.append(unscaled_obs)
-        actions_list.append(actions)
-        rewards_list.append(env_rewards)
-        frames_list.extend(frames)
-
-    performance = np.mean([r.sum() for r in rewards_list])
-    trajectories = {
-        'act': np.concatenate(actions_list, axis=0),
-        'obs': np.concatenate(observes_list, axis=0),
-    }
-
-    np.savez('traj/{}_{:.1f}.npz'.format(env_name, performance), **trajectories)
-    save_frames_as_gif(frames_list, file_name='fig/{}_{:.1f}.gif'.format(env_name, performance))
-
-
-def save_frames_as_gif(frames, file_name='gym_animation.gif'):
-    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
-
-    patch = plt.imshow(frames[0])
-    plt.axis('off')
-
-    def animate(i):
-        patch.set_data(frames[i])
-
-    anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=20)
-    anim.save(file_name, writer='imagemagick', fps=30)
-    plt.close()
+    return (observes, actions, total_rewards, unscaled_obs, env_rewards)
 
 
 def run_policy(env, policy, scaler, logger, episodes, discriminator=None, reward_lambda=1e-1):
@@ -330,8 +283,8 @@ if __name__ == "__main__":
     # - 설정 >> reward_lambda = 0.1, num_episodes = 5000  #
     ######################################################
 
-    # env_name = 'InvertedPendulumPyBulletSparseEnv-v0'
-    env_name = 'InvertedDoublePendulumPyBulletSparseEnv-v0'
+    env_name = 'InvertedPendulumPyBulletSparseEnv-v0'
+    # env_name = 'InvertedDoublePendulumPyBulletSparseEnv-v0'
 
     # POfD 파라미터
     use_demo = True # True: POfD, False: PPO
@@ -384,10 +337,6 @@ if __name__ == "__main__":
         # POfD의 경우 discriminator 학습
         if discriminator:
             discriminator.train(observes, actions, scaler, logger=logger)
-
-        # Record demo trajectories when running with PPO in dense envs
-        if not discriminator and 'Sparse' not in env_name:
-            record_demo(env_name, env, policy, scaler)
 
         logger.log({
             '_Episode': episode,

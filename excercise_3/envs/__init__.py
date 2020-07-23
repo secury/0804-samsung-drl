@@ -1,6 +1,15 @@
+from gym.envs.registration import register
+
 register(
-	id='InvertedPendulumPyBulletEnv-v0',
-	entry_point='pybulletgym.envs.roboschool.envs.pendulum.inverted_pendulum_env:InvertedPendulumBulletEnv',
-	max_episode_steps=1000,
-	reward_threshold=950.0,
-	)
+    id='InvertedPendulumPyBulletSparseEnv-v0',
+    entry_point='excercise_3.envs.inverted_pendulum_sparse_env:InvertedPendulumBulletSparseEnv',
+    max_episode_steps=1000,
+    reward_threshold=950.0,
+)
+
+register(
+    id='InvertedDoublePendulumPyBulletSparseEnv-v0',
+    entry_point='excercise_3.envs.inverted_double_pendulum_sparse_env:InvertedDoublePendulumBulletSparseEnv',
+    max_episode_steps=1000,
+    reward_threshold=9100.0,
+)

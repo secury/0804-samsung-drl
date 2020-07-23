@@ -4,7 +4,7 @@ from pybulletgym.envs.roboschool.scenes.scene_bases import SingleRobotEmptyScene
 import numpy as np
 
 
-class InvertedPendulumBulletEnv(BaseBulletEnv):
+class InvertedPendulumBulletSparseEnv(BaseBulletEnv):
     def __init__(self):
         self.robot = InvertedPendulum()
         BaseBulletEnv.__init__(self, self.robot)
@@ -29,7 +29,6 @@ class InvertedPendulumBulletEnv(BaseBulletEnv):
         self.robot.apply_action(a)
         self.scene.global_step()
         state = self.robot.calc_state()  # sets self.pos_x self.pos_y
-        vel_penalty = 0
 
         self._timestep += 1
         if self._timestep % 200 == 0:
