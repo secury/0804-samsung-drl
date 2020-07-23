@@ -44,7 +44,7 @@ class Discriminator:
 
         # create network
         self._discriminator_network = DiscriminatorNetwork()
-        self._agent_logits = self._discriminator_network([self._agent_obs_ph, self._agent_act_ph])
+        agent_logits = self._discriminator_network([self._agent_obs_ph, self._agent_act_ph])
         demo_logits = self._discriminator_network([self._demo_obs_ph, self._demo_act_ph])
 
         #############################################

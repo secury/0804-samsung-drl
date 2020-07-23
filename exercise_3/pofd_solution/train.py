@@ -44,13 +44,13 @@ class Discriminator:
 
         # create network
         self._discriminator_network = DiscriminatorNetwork()
-        self._agent_logits = self._discriminator_network([self._agent_obs_ph, self._agent_act_ph])
+        agent_logits = self._discriminator_network([self._agent_obs_ph, self._agent_act_ph])
         demo_logits = self._discriminator_network([self._demo_obs_ph, self._demo_act_ph])
 
         #############################################
         # (1) 빈칸 채우기: agent_loss와 demo_loss를 작성 #
         #############################################
-        agent_loss = -tf.reduce_mean(tf.log(self._agent_logits + 1e-8))
+        agent_loss = -tf.reduce_mean(tf.log(agent_logits + 1e-8))
         demo_loss = -tf.reduce_mean(tf.log(1. - demo_logits + 1e-8))
         self._total_loss = agent_loss + demo_loss
         #############################################
@@ -58,7 +58,7 @@ class Discriminator:
         #################################################
         # (2) 빈칸 채우기: Demo 활용 reward 값 operator 작성 #
         #################################################
-        self._reward_op = -tf.log(self._agent_logits + 1e-8)
+        self._reward_op = -tf.log(agent_logits + 1e-8)
         #################################################
 
         self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(self._total_loss)
