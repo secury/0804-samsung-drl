@@ -8,4 +8,4 @@ dependencies:
   - gym==0.17.2
   - pygame==1.9.6
   - sklearn
-  - tensorflow-gpu==1.14
+  - tensorflow==1.14
