@@ -31,6 +31,9 @@ class DiscriminatorNetwork(tf.keras.layers.Layer):
 
 
 class Discriminator:
+    """
+    Demonstration 데이터와 현재 Policy에서 얻어진 데이터 사이의 차이를 계산하기 위한 discriminator.
+    """
     def __init__(self, env_name, obs_dim, act_dim, learning_rate=1e-2):
         # Load demo data
         traj_data = np.load('../demo/{}.npz'.format(env_name), allow_pickle=True)
@@ -55,11 +58,18 @@ class Discriminator:
         self._total_loss = agent_loss + demo_loss
         #############################################
 
-        #################################################
-        # (2) 빈칸 채우기: Demo 활용 reward 값 operator 작성 #
-        #################################################
+        #####################################################################
+        # (2) 빈칸 채우기: Demo 활용 reward 값 생성 operator 작성                  #
+        #                                                                   #
+        # self._reward_op                                                   #
+        #   : agent의 (s, a)에 대해 reward로 활용할 discriminator output을        #
+        #    계산하기 위한 operator. 현재 코드에서는 -log(D(s, a)) 값을 생성해야 함.     #
+        #                                                                   #
+        # self._reward_op는 discriminator의 get_reward(...) 함수에서 사용.       #
+        # - 해당 함수 참고 요망                                                  #
+        #####################################################################
         self._reward_op = None
-        #################################################
+        #####################################################################
 
         self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(self._total_loss)
 
@@ -67,6 +77,9 @@ class Discriminator:
         self._sess.run(tf.global_variables_initializer())
 
     def train(self, agent_obs, agent_act, scaler, batch_size=256, epoch=30, logger=None):
+        """
+        Discriminator를 agent의 (s, a) 데이터와 demonstration의 (s, a) 데이터 기반으로 학습.
+        """
         scale, offset = scaler.get()
         scale[-1] = 1.0  # don't scale time step feature
         offset[-1] = 0.0  # don't offset time step feature
@@ -94,6 +107,12 @@ class Discriminator:
             })
 
     def get_rewards(self, agent_obs, agent_act):
+        """
+        주어진 agent의 (s, a) 데이터 각각에 대해 discriminator 기반 reward를 리턴.
+
+        - run_episode() 함수 내에서 학습에 활용할 reward 계산 시, 본 함수를 호출하여 사용.
+        - 학습에 활용하는 reward = 환경에서 주어지는 reward + reward_lambda * (-log(D(s, a))) 임.
+        """
         feed_dict = {
             self._agent_obs_ph: agent_obs,
             self._agent_act_ph: agent_act,
@@ -202,10 +221,8 @@ def run_episode(env, policy, scaler, animate=False, sleep=None, discriminator=No
 
     if discriminator:
         ##################################################################
-        # (3) 빈칸 채우기: Discriminator reward 값을 환경에서 얻은 reward에 더함 #
-        ##################################################################
-        discriminator_rewards = None
-        total_rewards = None
+        discriminator_rewards = discriminator.get_rewards(observes, actions)
+        total_rewards = env_rewards + reward_lambda * discriminator_rewards
         ##################################################################
     else:
         total_rewards = env_rewards
