@@ -39,7 +39,7 @@ class Policy(object):
         self.means = tf.keras.layers.Dense(act_dim, name="means", activation="linear")(h3)
         self.log_vars = tf.get_variable('logvars', (act_dim), tf.float32,
                                    tf.constant_initializer(-1.0))
-
+        self.sampled_act = self.means + tf.exp(self.log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
         logp = -0.5 * tf.reduce_sum(self.log_vars)
         logp += -0.5 * tf.reduce_sum(tf.square(self.act_ph - self.means) /
                                      tf.exp(self.log_vars), axis=1)
@@ -64,9 +64,8 @@ class Policy(object):
         self.train_op = optimizer.minimize(self.loss)
 
     def sample(self, obs):
-        sampled_act = self.means + tf.exp(self.log_vars / 2.0) * tf.random_normal(shape=(act_dim,))
         feed_dict = {self.obs_ph: obs}
-        return self.sess.run(sampled_act, feed_dict=feed_dict)
+        return self.sess.run(self.sampled_act, feed_dict=feed_dict)
 
     def update(self, observes, actions, advantages, logger):
         feed_dict = {self.obs_ph: observes, self.act_ph: actions, self.advantages_ph: [advantages]}
