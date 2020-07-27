@@ -60,7 +60,11 @@ if __name__ == "__main__":
     while not done:
         ########################
         # YOUR IMPLEMENTATION PART
-        pass
+        act = policy.sample(obs)
+        obs, reward, _ = env.step(act)
+        observes.append(obs)
+        actions.append(act)
+        rewards.append(reward)
         ########################
 
     accumulated_reward = np.sum(rewards)
@@ -84,7 +88,9 @@ if __name__ == "__main__":
         for t in range(10000):
             ########################
             # YOUR IMPLEMENTATION PART
-            accumulated_reward += 0
+            act = policy.sample(obs)
+            obs, reward, _ = env.step(act)
+            accumulated_reward += reward
             ########################
 
             if done:
