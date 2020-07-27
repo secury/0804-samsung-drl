@@ -74,6 +74,9 @@ class Discriminator:
         self._sess.run(tf.global_variables_initializer())
 
     def train(self, agent_obs, agent_act, scaler, batch_size=256, epoch=30, logger=None):
+        """
+        Discriminator를 agent의 (s, a) 데이터와 demonstration의 (s, a) 데이터 기반으로 학습.
+        """
         scale, offset = scaler.get()
         scale[-1] = 1.0  # don't scale time step feature
         offset[-1] = 0.0  # don't offset time step feature
