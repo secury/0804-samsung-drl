@@ -61,7 +61,7 @@ if __name__ == "__main__":
         ########################
         # YOUR IMPLEMENTATION PART
         act = policy.sample(obs)
-        obs, reward, _ = env.step(act)
+        obs, reward, done, _ = env.step(act)
         observes.append(obs)
         actions.append(act)
         rewards.append(reward)
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     print("======================================")
     print(f"During one episodes, The accumulated Rewards: {accumulated_reward}")
     print("======================================")
-    del env
 
     """
     STEP3
