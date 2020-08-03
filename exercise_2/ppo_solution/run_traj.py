@@ -17,7 +17,7 @@ class Policy(tf.layers.Layer):
         self.obs_ph = tf.keras.layers.Input(obs_dim, name='obs')  # [batch_size, obs_dim]
         """
         STEP 1
-        Gaussian NN Policy 
+        Gaussian NN Policy
         using tf.keras.layers.Dense
         """
         ########################
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             ########################
             # YOUR IMPLEMENTATION PART
             act = policy.sample(obs)
-            obs, reward, _ = env.step(act)
+            obs, reward, done, _ = env.step(act)
             accumulated_reward += reward
             ########################
 

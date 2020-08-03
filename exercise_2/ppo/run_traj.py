@@ -17,7 +17,7 @@ class Policy(tf.layers.Layer):
         self.obs_ph = tf.keras.layers.Input(obs_dim, name='obs')  # [batch_size, obs_dim]
         """
         STEP 1
-        Gaussian NN Policy 
+        Gaussian NN Policy
         using tf.keras.layers.Dense
         """
         ########################
