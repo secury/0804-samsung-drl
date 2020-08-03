@@ -1,6 +1,8 @@
 import time
 import os
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
 import gym
 import numpy as np
 import tensorflow as tf
@@ -10,9 +12,7 @@ import scipy.signal
 from utils import Logger, Scaler
 from matplotlib import pyplot as plt, animation
 import pybulletgym
-import exercise_3.envs
-
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import envs
 
 
 class DiscriminatorNetwork(tf.keras.layers.Layer):
@@ -33,7 +33,7 @@ class DiscriminatorNetwork(tf.keras.layers.Layer):
 class Discriminator:
     def __init__(self, env_name, obs_dim, act_dim, learning_rate=1e-2):
         # Load demo data
-        traj_data = np.load('../demo/{}.npz'.format(env_name), allow_pickle=True)
+        traj_data = np.load('exercise_3/demo/{}.npz'.format(env_name), allow_pickle=True)
         self._demo_obs, self._demo_act = traj_data['obs'], traj_data['act']
 
         # define placeholders
